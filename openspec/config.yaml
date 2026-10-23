@@ -1,32 +1,77 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+# Injected into EVERY artifact generation. Kept intentionally concise.
+context: |
+  Multi-source music TUI: one terminal application in Rust that plays local
+  files through MPD, streams YouTube / YouTube Music, and loads Spotify
+  playlists through spot-dl. Keyboard-driven, Vim-style, low resource use.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Users: people who live in a terminal (tmux, Neovim, SSH) and want a single
+  player instead of three apps and a browser tab.
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+  Audio architecture (fixed; not renegotiated in proposals):
+  - Local library: an external mpd daemon owns files, queue and audio
+    output. The TUI is a protocol client (mpd crate); it never decodes audio
+    and never writes to MPD's database.
+  - YouTube: queries go to yt-dlp to resolve a stream URL; playback, volume
+    and seek go through mpv, driven over its IPC socket. No browser.
+  - Spotify playlists: spot-dl resolves playlist and track metadata only
+    (name, artists, album, duration, ISRC). Each track is matched to a
+    YouTube source and streamed through the same yt-dlp + mpv pipeline. No
+    Spotify audio is downloaded, cached or redistributed, and no DRM is
+    bypassed.
+  - One queue abstraction over the three sources. The UI always shows which
+    source an entry came from, including while playing.
+
+  Stack (fixed; not renegotiated in proposals):
+  - Rust stable, single binary. Ratatui + Crossterm for the UI, Tokio for
+    async I/O and child processes.
+  - Album art through ratatui-image: Kitty, Sixel and iTerm2 protocols, with
+    a half-block fallback that always works.
+  - Config, themes and keymaps in TOML (serde). Vim-style defaults plus a
+    user override file in the platform config directory.
+  - External binaries detected at runtime: mpd, mpv, yt-dlp, spot-dl.
+  - Tests: unit and integration. Every spec scenario has one test traceable
+    by scenario name. MPD, mpv, yt-dlp and spot-dl are faked with fixtures;
+    the suite never touches the network.
+
+  Non-negotiable principles:
+  1. Language: user-facing strings exist in English and Spanish through a
+     single lookup table, never hardcoded in widgets. Specs, code
+     identifiers and commits are in English.
+  2. Keyboard-first: every action is reachable without a mouse, with a
+     discoverable help overlay. Mouse support is optional, never the only
+     path.
+  3. Graceful degradation: each source fails independently. A missing mpd,
+     mpv, yt-dlp or spot-dl is reported in the UI and disables only its own
+     tab; it never crashes or blocks the TUI.
+  4. Never block the render loop: no network call, subprocess spawn or disk
+     read on the draw path. Metadata and artwork resolve asynchronously
+     behind placeholders.
+  5. Terminal fidelity: works over SSH and inside tmux; album art degrades
+     to half-blocks instead of breaking layout or leaking escape sequences.
+  6. The spec is the source of truth: any observable behaviour change enters
+     as an OpenSpec change (proposal + deltas) or is regularised as one.
+     Behaviour that openspec/specs/ does not describe is a defect even if
+     the code works.
+
+# Per-artifact rules: injected only when generating that artifact.
+rules:
+  specs:
+    - Write in English and keep the normative keyword in English, e.g. "The
+      player MUST show the source of the current track"
+    - Reuse terms already defined in live specs; do not introduce new
+      synonyms for existing concepts
+    - Name the source (local, youtube, spotify) in every requirement whose
+      behaviour differs per source
+  proposal:
+    - Record each decision in proposal.md with its date
+    - State which of the three sources the change affects and whether it
+      touches the queue abstraction
+  design:
+    - No new dependency without written justification; prefer the standard
+      library or a crate already in use
+    - Document the process boundary (mpd, mpv, yt-dlp, spot-dl) and the
+      failure mode when it is missing or dies
+  tasks:
+    - Order tasks so each is verifiable offline; group them by source
