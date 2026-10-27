@@ -1,0 +1,17 @@
+{
+  "name": "Disintegration (Remastered)",
+  "tracks": [
+    {
+      "name": "Plainsong",
+      "artists": ["The Cure"],
+      "album_name": "Disintegration",
+      "duration": 305
+    },
+    {
+      "name": "Lovesong",
+      "artists": ["The Cure"],
+      "album_name": "Disintegration",
+      "duration": 209
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+#!/bin/sh
+# Offline yt-dlp fixture: deterministic output, no network.
+mode=url
+last=
+for arg in "$@"; do
+  last="$arg"
+  [ "$arg" = "--print" ] && mode=print
+  [ "$arg" = "--print-json" ] && mode=json
+  [ "$arg" = "--get-url" ] && mode=url
+  [ "$arg" = "--write-thumbnail" ] && mode=thumb
+done
+
+case "$last" in
+  *missing*) echo "ERROR: no results for that query" >&2; exit 1 ;;
+  *unreachable*) echo "network is unreachable" >&2; exit 1 ;;
+esac
+
+case "$mode" in
+  print) echo "dQw4w9WgXcQ|213" ;;
+  thumb)
+    dir=
+    prev=
+    for arg in "$@"; do
+      [ "$prev" = "-o" ] && dir="$arg"
+      prev="$arg"
+    done
+    id=${last##*v=}
+    printf 'fakejpg' > "$(dirname "$dir")/$id.jpg"
+    ;;
+  *) echo "https://media.invalid/audio/dQw4w9WgXcQ" ;;
+esac

@@ -1,0 +1,26 @@
+{
+  "name": "Disintegration",
+  "tracks": [
+    {
+      "name": "Plainsong",
+      "artists": ["The Cure"],
+      "album_name": "Disintegration",
+      "duration": 305,
+      "isrc": "GBUM71303039"
+    },
+    {
+      "name": "Pictures of You",
+      "artists": ["The Cure"],
+      "album_name": "Disintegration",
+      "duration": 468,
+      "isrc": "GBUM71303040"
+    },
+    {
+      "name": "Lovesong",
+      "artists": ["The Cure"],
+      "album_name": "Disintegration",
+      "duration": 209,
+      "isrc": "GBUM71303041"
+    }
+  ]
+}

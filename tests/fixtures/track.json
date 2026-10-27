@@ -1,0 +1,12 @@
+{
+  "name": "Plainsong",
+  "tracks": [
+    {
+      "name": "Plainsong",
+      "artists": ["The Cure"],
+      "album_name": "Disintegration",
+      "duration": 305,
+      "isrc": "GBUM71303039"
+    }
+  ]
+}

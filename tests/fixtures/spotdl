@@ -1,0 +1,35 @@
+#!/bin/sh
+# Offline stand-in for `spotdl save <url> --save-file <path>`.
+# Picks a fixture by URL kind: /track/ -> track.json, /album/ -> album.json.
+# SPOTDL_FAIL makes it fail with that message on stderr.
+if [ -n "$SPOTDL_FAIL" ]; then
+  echo "$SPOTDL_FAIL" >&2
+  exit 1
+fi
+
+url=""
+out=""
+previous=""
+for argument in "$@"; do
+  if [ "$previous" = "--save-file" ]; then
+    out="$argument"
+  fi
+  if [ "$previous" = "save" ]; then
+    url="$argument"
+  fi
+  previous="$argument"
+done
+
+if [ -z "$out" ]; then
+  echo "missing --save-file" >&2
+  exit 2
+fi
+
+case "$url" in
+  */track/*) fixture="track.json" ;;
+  */album/*) fixture="album.json" ;;
+  *) fixture="playlist.json" ;;
+esac
+
+directory=$(dirname "$0")
+cat "$directory/$fixture" > "$out"
