@@ -146,11 +146,17 @@ test session away from your real state, set `OMM_CONFIG_DIR`:
 
 ## Troubleshooting
 
-- **`No configuration file found`** — MPD did not find `~/.mpdconf`. Pass the
-  path explicitly (`mpd --no-daemon ~/.mpdconf`) or use one of MPD's searched
-  locations: `~/.mpdconf`, `~/.mpd/mpd.conf`,
-  `~/Library/Application Support/mpd/mpd.conf` (macOS), or
+- **`No configuration file found` / `Failed to open "~/.mpdconf"`** — the config
+  does not exist yet. Create it with the block in section 2, or pass an existing
+  path explicitly (`mpd --no-daemon /path/to/mpd.conf`). MPD also searches
+  `~/.mpd/mpd.conf`, `~/Library/Application Support/mpd/mpd.conf` (macOS), and
   `~/.config/mpd/mpd.conf` (Linux).
+- **`brew services start mpd` fails with `Bootstrap failed: 5`** — an MPD is
+  usually already running and holding port 6600, often a leftover
+  `mpd --no-daemon` from an earlier test. Check the listener with
+  `lsof -nP -iTCP:6600 -sTCP:LISTEN`, stop the old process (`pkill mpd`, or
+  `brew services stop mpd` first), then run `brew services restart mpd`. Verify
+  with `brew services list` (state `started`) and `mpc status`.
 - **Connection refused / MPD is not available** — MPD is not running, or it is
   on another port. Check `mpc status` and `lsof -nP -iTCP:6600 -sTCP:LISTEN`.
 - **Local tab is empty** — run `mpc update`, then `mpc ls`. Check that
@@ -158,9 +164,10 @@ test session away from your real state, set `OMM_CONFIG_DIR`:
 - **Volume does nothing / `No mixer`** — the output has no hardware mixer.
   Playback still works; add `mixer_type "software"` inside the `audio_output`
   block if you want volume control.
-- **YouTube fails with `HTTP error 403 Forbidden`** — YouTube URL extraction is
-  intermittent. Update `yt-dlp` (`brew upgrade yt-dlp` or
-  `pipx upgrade yt-dlp`) and retry.
+- **YouTube fails with `HTTP error 403 Forbidden`** — `omm` asks mpv to use
+  YouTube's `android` player client, which avoids the 403s seen with the default
+  web clients on some networks. If it still fails, update `yt-dlp`
+  (`brew upgrade yt-dlp` or `pipx upgrade yt-dlp`) and retry.
 - **Spotify import fails** — check `ffmpeg` and `spotdl` versions, use a public
   URL, and retry. Imports have a 120-second timeout per collection.
 - **No album art** — the terminal lacks a supported graphics protocol, or the

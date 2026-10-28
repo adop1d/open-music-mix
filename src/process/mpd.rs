@@ -39,6 +39,7 @@ enum Conn {
 pub struct RealMpd {
     settings: MpdSettings,
     conn: Option<Conn>,
+    cache: Option<Vec<Song>>,
     backoff: Duration,
     last_attempt: Option<Instant>,
 }
@@ -48,6 +49,7 @@ impl RealMpd {
         Self {
             settings,
             conn: None,
+            cache: None,
             backoff: Duration::ZERO,
             last_attempt: None,
         }
@@ -133,6 +135,7 @@ impl RealMpd {
         let disconnected = matches!(error, mpd::error::Error::Io(_));
         if disconnected {
             self.conn = None;
+            self.cache = None;
         }
         Err(if disconnected {
             SourceError::Disconnected
@@ -142,11 +145,34 @@ impl RealMpd {
     }
 
     fn songs(&mut self) -> Result<Vec<Song>, SourceError> {
-        // MPD's `listall` returns bare paths without tags, and this crate has no
-        // `listallinfo`, so walk directories with `lsinfo` to keep metadata.
+        if let Some(songs) = &self.cache {
+            return Ok(songs.clone());
+        }
+        // The crate's `lsinfo` drops directory-only replies, so walk the parents
+        // of `listall` paths instead of recursing through `lsinfo`.
+        let conn = self.ensure()?;
+        let files = match conn {
+            Conn::Tcp(client) => client.listall(),
+            #[cfg(unix)]
+            Conn::Unix(client) => client.listall(),
+        };
+        let files = match files {
+            Ok(files) => files,
+            Err(error) => return self.failed(error),
+        };
+
+        let mut dirs = std::collections::BTreeSet::new();
+        for file in &files {
+            dirs.insert(
+                file.file
+                    .rsplit_once('/')
+                    .map(|(dir, _)| dir.to_string())
+                    .unwrap_or_default(),
+            );
+        }
+
         let mut songs = Vec::new();
-        let mut pending = vec![String::new()];
-        while let Some(dir) = pending.pop() {
+        for dir in dirs {
             let conn = self.ensure()?;
             let result = match conn {
                 Conn::Tcp(client) => client.lsinfo(uri_song(&dir)),
@@ -157,28 +183,9 @@ impl RealMpd {
                 Ok(entries) => entries,
                 Err(error) => return self.failed(error),
             };
-            for entry in entries {
-                let subdirs: Vec<&String> = entry
-                    .tags
-                    .iter()
-                    .filter(|(key, _)| key == "directory")
-                    .map(|(_, value)| value)
-                    .collect();
-                if subdirs.is_empty() {
-                    if !entry.file.is_empty() {
-                        songs.push(entry);
-                    }
-                } else {
-                    for name in subdirs {
-                        pending.push(if dir.is_empty() {
-                            name.clone()
-                        } else {
-                            format!("{dir}/{name}")
-                        });
-                    }
-                }
-            }
+            songs.extend(entries.into_iter().filter(|entry| !entry.file.is_empty()));
         }
+        self.cache = Some(songs.clone());
         Ok(songs)
     }
 }

@@ -73,7 +73,10 @@ impl MpvBackend for RealMpv {
                 "--idle=yes",
                 "--no-video",
                 "--audio-display=no",
-                "--no-ytdl",
+                // ytdl:// URLs need mpv's yt-dlp hook for a fresh signed URL and headers.
+                "--ytdl-format=bestaudio/best",
+                // YouTube's default web clients can return 403 on signed URLs.
+                "--ytdl-raw-options=extractor-args=youtube:player_client=android",
                 "--really-quiet",
                 "--cache=yes",
                 "--cache-secs=20",
@@ -208,7 +211,20 @@ impl MpvBackend for RealMpv {
 fn map_event(value: &Value) -> Option<PlayerEvent> {
     match value.get("event")?.as_str()? {
         "playback-restart" => Some(PlayerEvent::FirstAudio),
-        "end-file" => Some(PlayerEvent::EndFile),
+        "end-file" => {
+            // ytdl:// emits a redirect end-file before the real file starts.
+            match value.get("reason").and_then(|reason| reason.as_str()) {
+                Some("redirect") => None,
+                Some("error") => Some(PlayerEvent::Failed(
+                    value
+                        .get("file_error")
+                        .and_then(|error| error.as_str())
+                        .unwrap_or("playback failed")
+                        .to_string(),
+                )),
+                _ => Some(PlayerEvent::EndFile),
+            }
+        }
         "property-change" => {
             let name = value.get("name")?.as_str()?;
             let data = value.get("data")?;
@@ -224,5 +240,35 @@ fn map_event(value: &Value) -> Option<PlayerEvent> {
             }
         }
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn redirect_end_file_is_not_a_track_end() {
+        assert_eq!(
+            map_event(&json!({"event": "end-file", "reason": "redirect"})),
+            None
+        );
+        assert_eq!(
+            map_event(&json!({"event": "end-file", "reason": "eof"})),
+            Some(PlayerEvent::EndFile)
+        );
+    }
+
+    #[test]
+    fn error_end_file_is_a_failure() {
+        assert_eq!(
+            map_event(&json!({
+                "event": "end-file",
+                "reason": "error",
+                "file_error": "HTTP error 403 Forbidden"
+            })),
+            Some(PlayerEvent::Failed("HTTP error 403 Forbidden".to_string()))
+        );
     }
 }

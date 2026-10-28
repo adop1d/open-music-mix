@@ -61,6 +61,23 @@ fn fixture_reports_missing_binary() {
 }
 
 #[test]
+fn playback_url_uses_mpv_ytdl_for_youtube() {
+    let resolver = fixture();
+    assert_eq!(
+        resolver
+            .playback_url(&Locator::YoutubeId("dQw4w9WgXcQ".to_string()))
+            .as_deref(),
+        Some("ytdl://https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    );
+    assert_eq!(
+        resolver
+            .playback_url(&Locator::YoutubeQuery("the cure lullaby".to_string()))
+            .as_deref(),
+        Some("ytdl://ytsearch1:the cure lullaby")
+    );
+}
+
+#[test]
 fn fixture_finds_a_candidate() {
     let candidate = fixture().search_candidate("plainsong").unwrap();
     assert_eq!(candidate.video_id, "dQw4w9WgXcQ");

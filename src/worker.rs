@@ -172,29 +172,34 @@ impl Worker {
     ) {
         let resolver = self.backends.resolver.clone();
         let target = locator.clone();
+        let playback_url = resolver.playback_url(&locator);
         let latency = resolver.latency();
         if !latency.is_zero() {
             tokio::time::sleep(latency).await;
         }
         let started = tokio::time::Instant::now();
-        let resolved = tokio::task::spawn_blocking(move || resolver.resolve(&target))
-            .await
-            .unwrap_or_else(|error| Err(ResolveError::Unreachable(error.to_string())));
-
-        let resolved = match resolved {
-            Ok(resolved) => resolved,
-            Err(error) => {
-                self.status_resolve(&error);
-                let _ = self.tx.send(AppEvent::EntryFailed {
-                    entry_id,
-                    reason: format!("{}: {}", error.class(), error.message()),
-                });
-                return;
+        let url = match playback_url {
+            Some(url) => url,
+            None => {
+                let resolved = tokio::task::spawn_blocking(move || resolver.resolve(&target))
+                    .await
+                    .unwrap_or_else(|error| Err(ResolveError::Unreachable(error.to_string())));
+                match resolved {
+                    Ok(resolved) => resolved.url,
+                    Err(error) => {
+                        self.status_resolve(&error);
+                        let _ = self.tx.send(AppEvent::EntryFailed {
+                            entry_id,
+                            reason: format!("{}: {}", error.class(), error.message()),
+                        });
+                        return;
+                    }
+                }
             }
         };
 
+        self.backends.workspace.clear_audio();
         let mpv = self.backends.mpv.clone();
-        let url = resolved.url.clone();
         let played = tokio::task::spawn_blocking(move || {
             let mut player = mpv.lock().unwrap();
             if !player.is_alive() {
@@ -215,7 +220,6 @@ impl Worker {
             return;
         }
 
-        self.backends.workspace.clear_audio();
         let _ = self.tx.send(AppEvent::PlaybackStarted { entry_id });
 
         let mpv = self.backends.mpv.clone();

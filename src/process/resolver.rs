@@ -76,6 +76,16 @@ impl RealResolver {
 }
 
 impl Resolver for RealResolver {
+    fn playback_url(&self, locator: &Locator) -> Option<String> {
+        match locator {
+            Locator::YoutubeId(id) => Some(format!("ytdl://https://www.youtube.com/watch?v={id}")),
+            Locator::YoutubeQuery(query) | Locator::SpotifyTrack(query) => {
+                Some(format!("ytdl://ytsearch1:{query}"))
+            }
+            Locator::LocalPath(_) | Locator::MpdUri(_) => None,
+        }
+    }
+
     fn resolve(&self, locator: &Locator) -> Result<Resolved, ResolveError> {
         let target = Self::target(locator)?;
         let mut command = Command::new(&self.program);

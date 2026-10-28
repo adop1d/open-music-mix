@@ -186,6 +186,10 @@ impl ResolveError {
 /// Remote stream resolution boundary (yt-dlp).
 pub trait Resolver: Send + Sync {
     fn resolve(&self, locator: &Locator) -> Result<Resolved, ResolveError>;
+    /// URL that lets mpv resolve the stream itself (fresh URL and headers).
+    fn playback_url(&self, _locator: &Locator) -> Option<String> {
+        None
+    }
     /// Search used during import matching; returns the best candidate's id and duration.
     fn search_candidate(&self, query: &str) -> Result<Candidate, ResolveError>;
     /// Artificial delay for deterministic timing tests; real resolvers return zero.

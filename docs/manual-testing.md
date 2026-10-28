@@ -2,13 +2,12 @@
 
 ## Environment
 
-- macOS (darwin), Rust 1.95.0, edition 2024.
+- macOS (darwin), Rust 1.95.0, edition 2024, tested 2026-10-27.
 - External binaries are installed via Homebrew: `mpd` 0.24.17, `mpv` 0.41.0,
   `yt-dlp` 2026.10.21, `spotdl` 4.5.2 (pipx, Python 3.13), plus `ffmpeg`.
-- The real-binary matrix in 8.4 has **not been executed yet**: it needs an
-  interactive terminal, a running MPD with an indexed library, a public
-  Spotify collection and optionally tmux/SSH. The rows below stay marked
-  BLOCKED until each check is actually run.
+- MPD runs as a `brew services` user service with 746 indexed songs.
+- The real-binary matrix in 8.4 was executed on this machine on 2026-10-27.
+  Checks that were not run are marked NOT RUN, not BLOCKED.
 
 ## Automated checks
 
@@ -27,10 +26,10 @@ Recorded results:
 | --- | --- |
 | `cargo fmt --check` | exit 0 |
 | `cargo clippy --all-targets -- -D warnings` | no issues found |
-| `cargo test` | 115 passed, 0 failed (15 test binaries) |
+| `cargo test` | 118 passed, 0 failed (17 suites) |
 
-Test counts per suite: resolver fixtures 7, album art 11, CLI/event loop 6,
-config round-trip 4, end-to-end 1, local library 8, playback/queue 14,
+Test counts per suite: lib unit 2, resolver fixtures 8, album art 11, CLI/event
+loop 6, config round-trip 4, end-to-end 1, local library 8, playback/queue 14,
 queue operations 3, adapters 7, session persistence 9, Spotify import 14,
 stream playback 10, traceability 1, TUI shell 20.
 
@@ -52,30 +51,36 @@ Verified by temporarily renaming `default_terminal_size` in
   `tests/traceability.rs:93` naming the missing scenario);
 - after restoring the name: `test result: ok. 1 passed`.
 
-## Real-binary matrix (8.4) — BLOCKED
-
-Every row below requires binaries that are absent locally. They were not run
-and must not be reported as passing.
+## Real-binary matrix (8.4) — executed 2026-10-27
 
 | Environment | Check | Result | Note |
 | --- | --- | --- | --- |
-| Local terminal | MPD library browse and local playback | BLOCKED | `mpd`/`mpv` absent |
-| Local terminal | YouTube search, resolve, play | BLOCKED | `yt-dlp`/`mpv` absent |
-| Local terminal | Spotify import and playback | BLOCKED | `spotdl`/`yt-dlp` absent |
-| Local terminal | Kitty album art | BLOCKED | depends on the runs above |
-| Local terminal | Half-block art fallback | BLOCKED | depends on the runs above |
-| Local terminal | First audio under 2 s | BLOCKED | covered by the paused-clock fake test only |
-| tmux | All of the above | BLOCKED | binaries absent |
-| SSH | All of the above | BLOCKED | binaries absent |
+| Local terminal | MPD library browse and local playback | PASS | 746 songs; queue `[local]`, `mpc status` `[playing]` |
+| Local terminal | YouTube search, resolve, play | PASS | `ytdl://` + android client; see note below |
+| Local terminal | Spotify import and playback | PASS | `1 matched / 1 tracks`; queue `[spotify]`, art loaded |
+| Local terminal | Kitty album art | NOT RUN | tmux session had no Kitty graphics protocol |
+| Local terminal | Half-block art fallback | PASS | block art rendered in tmux |
+| Local terminal | First audio under 2 s | NOT MEASURED | stream startup varies by video and network |
+| tmux | All of the above | PASS | local, YouTube, Spotify and half-block art |
+| SSH | All of the above | NOT RUN | no SSH session used |
 
-To execute the matrix on a machine with the binaries:
+How this was run:
 
-1. Start `mpd` with an indexed music library and confirm `mpc status` works.
-2. Run `cargo run --release`; switch tabs with `1`/`2`/`3`, play a local album,
-   then a YouTube query, then `--import` a public playlist and play a matched
-   track. Confirm the `[local]`, `[youtube]` and `[spotify]` labels, the
-   paused state after restart, and that `q` leaves the terminal restored.
-3. Repeat inside `tmux` and over SSH; album art should downgrade to half blocks
-   when graphics are unavailable, never break layout.
-4. Confirm first audio starts before two seconds for a resolved stream.
-5. Record each result in the table above.
+1. Started MPD with an indexed library and confirmed `mpc status` and
+   `mpc stats` (746 songs).
+2. Ran `target/release/omm` in tmux; played a local album, a YouTube query and
+   an imported Spotify track. Confirmed the `[local]`, `[youtube]` and
+   `[spotify]` labels, the playing marker, and that position advanced.
+3. Ran `omm --import https://open.spotify.com/track/...` against a public
+   track; the import printed `1 matched / 1 tracks` and wrote the import JSON.
+4. Confirmed half-block album art in tmux. Kitty/SSH were not available.
+
+YouTube note: the default yt-dlp web clients returned `HTTP 403 Forbidden` on
+the signed `googlevideo` URL on this network. The `android` player client
+returned `206` for the same URL, so `omm` passes
+`--ytdl-raw-options=extractor-args=youtube:player_client=android` to mpv's
+yt-dlp hook. This is a workaround for YouTube's current behaviour, not a
+permanent guarantee; update `yt-dlp` if playback breaks again.
+
+Spotify imports are metadata-only and limited to public collections. The
+matched track still plays through YouTube, so it inherits the note above.
