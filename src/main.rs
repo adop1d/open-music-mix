@@ -80,7 +80,7 @@ async fn run_tui(import: Option<String>) -> ExitCode {
     for event in worker.probe_events(&|name| find_binary(name).is_some()) {
         let _ = tx.send(event);
     }
-    tokio::spawn(worker.run(command_rx));
+    let worker_task = tokio::spawn(worker.run(command_rx));
     let _ = command_tx.send(Command::LoadLibrary);
 
     let mut app = App::new(config, i18n)
@@ -118,6 +118,9 @@ async fn run_tui(import: Option<String>) -> ExitCode {
     .await;
     ticker.abort();
     let _ = command_tx.send(Command::Shutdown);
+    drop(command_tx);
+    // Wait for the worker to quit mpv; otherwise the runtime can exit first.
+    let _ = worker_task.await;
     let _ = session::save(&dir, &app.state());
     drop(terminal);
     drop(guard);
