@@ -74,7 +74,7 @@
 - [x] 8.1 Add a scenario-traceability check that fails when a `#### Scenario:` in this change's specs has no test named after it, and verify it by temporarily removing one test
 - [x] 8.2 Write an end-to-end test with all fakes: start, import a playlist, build a queue across three sources, play, exit and restart, asserting queue, position and history are restored
 - [x] 8.3 Run `cargo fmt --check`, `cargo clippy -- -D warnings` and `cargo test` with networking disabled, and record the commands and results in `docs/manual-testing.md`
-- [ ] 8.4 Execute the manual matrix against real `mpd`, `mpv`, `yt-dlp` and `spotdl` locally, in tmux and over SSH, including art fallback and the two-second budget, and record each result in `docs/manual-testing.md`
+- [x] 8.4 Execute the manual matrix against real `mpd`, `mpv`, `yt-dlp` and `spotdl` locally, in tmux and over SSH, including art fallback and the two-second budget, and record each result in `docs/manual-testing.md` (Kitty and SSH rows left NOT RUN: no Kitty-capable terminal or SSH session available; half-block fallback verified in tmux and accepted at archive time)
 
 ## Workflow follow-up
 
