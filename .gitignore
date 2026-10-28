@@ -1,1 +1,8 @@
 /target
+
+# Local runtime data (config may hold mpd.password; state/imports are user data)
+/config.toml
+/state.json
+/imports/
+.env
+.env.*
