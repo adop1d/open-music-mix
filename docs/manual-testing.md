@@ -73,7 +73,8 @@ How this was run:
    `[spotify]` labels, the playing marker, and that position advanced.
 3. Ran `omm --import https://open.spotify.com/track/...` against a public
    track; the import printed `1 matched / 1 tracks` and wrote the import JSON.
-4. Confirmed half-block album art in tmux. Kitty/SSH were not available.
+4. Confirmed half-block album art in tmux. Kitty/SSH were not available and
+   were accepted as NOT RUN when the change was archived.
 
 YouTube note: the default yt-dlp web clients returned `HTTP 403 Forbidden` on
 the signed `googlevideo` URL on this network. The `android` player client

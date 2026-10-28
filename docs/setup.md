@@ -141,8 +141,9 @@ test session away from your real state, set `OMM_CONFIG_DIR`:
 
    The import prints `name: matched / total` and then starts the TUI. Private
    collections are not supported.
-4. **Album art:** iTerm2, Kitty, and Sixel terminals show images. Other
-   terminals, and narrow panels, fall back to half-blocks; this is expected.
+4. **Album art:** Kitty, WezTerm, Ghostty and Konsole show full-resolution
+   images through the Kitty graphics protocol. Other terminals, and narrow
+   panels, fall back to half-blocks; this is expected.
 
 ## Troubleshooting
 

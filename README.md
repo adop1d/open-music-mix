@@ -10,7 +10,7 @@ only: `spotdl` fetches the track list, then each track is matched to YouTube.
 - Rust 1.85 or newer (edition 2024)
 - `mpd` running locally for the Local tab
 - `mpv`, `yt-dlp`, `spotdl` and `ffmpeg` on `PATH` for YouTube and Spotify
-- A terminal with Kitty graphics, iTerm2 inline images, Sixel, or plain
+- A terminal with Kitty graphics (kitty, WezTerm, Ghostty, Konsole) or plain
   half-blocks. Narrow panels automatically fall back to half-blocks.
 
 Missing binaries disable only the sources that need them; the TUI still starts
