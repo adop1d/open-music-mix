@@ -11,8 +11,7 @@ fn fixture() -> RealResolver {
 }
 
 fn temp(name: &str) -> std::path::PathBuf {
-    let path =
-        std::env::temp_dir().join(format!("omm-resolver-{}-{name}", std::process::id()));
+    let path = std::env::temp_dir().join(format!("omm-resolver-{}-{name}", std::process::id()));
     let _ = std::fs::remove_dir_all(&path);
     std::fs::create_dir_all(&path).unwrap();
     path

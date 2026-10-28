@@ -211,8 +211,9 @@ impl RealSpotifyImporter {
             .map(|duration| duration.as_nanos())
             .unwrap_or(0);
         let sequence = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        // spotdl rejects any save file that does not end in `.spotdl`.
         let path: PathBuf = std::env::temp_dir().join(format!(
-            "omm-import-{}-{stamp}-{sequence}.json",
+            "omm-import-{}-{stamp}-{sequence}.spotdl",
             std::process::id()
         ));
         let mut command = Command::new(&self.program);

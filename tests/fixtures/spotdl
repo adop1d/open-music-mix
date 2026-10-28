@@ -25,6 +25,14 @@ if [ -z "$out" ]; then
   exit 2
 fi
 
+case "$out" in
+  *.spotdl) ;;
+  *)
+    echo "Save file has to end with .spotdl" >&2
+    exit 1
+    ;;
+esac
+
 case "$url" in
   */track/*) fixture="track.json" ;;
   */album/*) fixture="album.json" ;;

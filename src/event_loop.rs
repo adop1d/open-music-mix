@@ -38,7 +38,6 @@ pub fn spawn_input(tx: UnboundedSender<AppEvent>) -> std::thread::JoinHandle<()>
                         && tx.send(AppEvent::Key(key)).is_err()
                     {
                         return;
-                        return;
                     }
                 }
                 Ok(Event::Resize(_, _)) => {

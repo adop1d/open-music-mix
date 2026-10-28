@@ -149,9 +149,9 @@ impl RealMpd {
         while let Some(dir) = pending.pop() {
             let conn = self.ensure()?;
             let result = match conn {
-                Conn::Tcp(client) => client.lsinfo(&uri_song(&dir)),
+                Conn::Tcp(client) => client.lsinfo(uri_song(&dir)),
                 #[cfg(unix)]
-                Conn::Unix(client) => client.lsinfo(&uri_song(&dir)),
+                Conn::Unix(client) => client.lsinfo(uri_song(&dir)),
             };
             let entries = match result {
                 Ok(entries) => entries,

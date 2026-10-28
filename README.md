@@ -1,4 +1,4 @@
-# oom
+# omm
 
 One keyboard-driven terminal queue for local MPD music, YouTube streams and
 Spotify playlists. Local files play through MPD; everything remote is resolved
@@ -9,12 +9,17 @@ only: `spotdl` fetches the track list, then each track is matched to YouTube.
 
 - Rust 1.85 or newer (edition 2024)
 - `mpd` running locally for the Local tab
-- `mpv`, `yt-dlp` and `spotdl` on `PATH` for YouTube and Spotify
+- `mpv`, `yt-dlp`, `spotdl` and `ffmpeg` on `PATH` for YouTube and Spotify
 - A terminal with Kitty graphics, iTerm2 inline images, Sixel, or plain
   half-blocks. Narrow panels automatically fall back to half-blocks.
 
 Missing binaries disable only the sources that need them; the TUI still starts
 and the queue still works.
+
+## First-time setup
+
+See [docs/setup.md](docs/setup.md) for installing the external programs,
+configuring MPD, and verifying each source.
 
 ## Build and run
 
@@ -33,7 +38,7 @@ Import a Spotify playlist, album or track before the TUI starts:
 The result is printed on stderr (`name: matched / total`) and the TUI starts
 afterwards. Any failure exits non-zero.
 
-- `` `omm --help` prints usage.``
+Run `omm --help` to see the available flags.
 
 ## Keys
 
@@ -60,6 +65,7 @@ Nothing is written to the working directory.
 - `cargo fmt --check`
 - `cargo clippy -- -D warnings`
 
-More detail: [docs/imports.md](docs/imports.md) for import behaviour and limits,
+More detail: [docs/setup.md](docs/setup.md) for the first-run walkthrough,
+[docs/imports.md](docs/imports.md) for import behaviour and limits,
 [docs/configuration.md](docs/configuration.md) for config/state/rollback and
 [docs/manual-testing.md](docs/manual-testing.md) for the verification record.

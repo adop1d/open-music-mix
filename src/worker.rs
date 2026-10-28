@@ -141,7 +141,8 @@ impl Worker {
         let mpd = self.backends.mpd.clone();
         let result = tokio::task::spawn_blocking(move || {
             let adapter = LocalAdapter::new(mpd);
-            adapter.set_volume(volume)?;
+            // MPD outputs without a mixer reject volume; playback must still start.
+            let _ = adapter.set_volume(volume);
             adapter.play(&uris)
         })
         .await

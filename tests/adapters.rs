@@ -34,10 +34,7 @@ fn fake_status_reaches_the_app() {
     let (_fake, mpd) = shared(FakeMpd::default());
     let adapter = LocalAdapter::new(mpd);
     let error = adapter.library().err().unwrap();
-    assert!(matches!(
-        error,
-        omm::process::SourceError::Disconnected
-    ));
+    assert!(matches!(error, omm::process::SourceError::Disconnected));
 
     let mut app = app();
     app.handle(AppEvent::Status {
